@@ -13,12 +13,16 @@ public class LoggingAspect {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingAspect.class);
 
-    @Around("execution(* com.personalfinance.financesystem.controller..*(..))")
+    @Around("execution(* com.personalfinance.finance_system.controller..*(..)) || execution(* com.personalfinance.finance_system.service..*(..))")
+
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         Object proceed = joinPoint.proceed();
         long duration = System.currentTimeMillis() - start;
+
+        logger.info(joinPoint.getSignature() + " executed in " + duration + "ms");
         logger.debug("{} executed in {} ms", joinPoint.getSignature(), duration);
+
         return proceed;
     }
 }

@@ -1,5 +1,6 @@
 package com.personalfinance.finance_system.service;
 
+import com.personalfinance.finance_system.dto.FinancialReportResponse;
 import com.personalfinance.finance_system.model.Expense;
 import com.personalfinance.finance_system.model.User;
 
@@ -19,4 +20,8 @@ public interface AdminService {
 
     // Get list of users who have exceeded their expense limit
     List<User> getUsersExceededLimit();
+
+    Map<String, Double> getExpensesGroupedByCategory();
+    FinancialReportResponse getSystemFinancialReport();
+
 }

@@ -18,13 +18,22 @@ public class AuthController {
         this.authService = authService;
     }
 
+    // Register new user
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
+    // Login existing user/admin
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    // (Optional) Logout endpoint (if token revocation is added later)
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        // Placeholder – for stateless JWT, logout can be handled on frontend
+        return ResponseEntity.ok("Logout successful.");
     }
 }
