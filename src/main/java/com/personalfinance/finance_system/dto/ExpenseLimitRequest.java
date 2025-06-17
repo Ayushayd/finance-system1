@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 public class ExpenseLimitRequest {
 
+    // Getters and Setters
     @NotNull(message = "Limit amount is required")
-    @Min(value = 1, message = "Limit must be greater than 0")
-    private Double monthlyLimit;
+    @Min(value = 0, message = "Limit must be positive")
+    private Double limitAmount;
+
 }

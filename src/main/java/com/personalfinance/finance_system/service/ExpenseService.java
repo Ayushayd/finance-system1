@@ -11,5 +11,4 @@ public interface ExpenseService {
     ExpenseResponse getExpenseById(String username, Long id);
     ExpenseResponse updateExpense(String username, Long id, ExpenseRequest request);
     void deleteExpense(String username, Long id);
-    List<ExpenseResponse> getExpensesByCategory(String username, String category);
 }

@@ -1,14 +1,11 @@
 package com.personalfinance.finance_system.service.impl;
 
-import com.personalfinance.finance_system.dto.FinancialReportResponse;
 import com.personalfinance.finance_system.exception.ResourceNotFoundException;
 import com.personalfinance.finance_system.model.Expense;
-import com.personalfinance.finance_system.model.Income;
 import com.personalfinance.finance_system.model.Limit;
 import com.personalfinance.finance_system.model.User;
-import com.personalfinance.finance_system.repository.ExpenseRepository;
-import com.personalfinance.finance_system.repository.IncomeRepository;
 import com.personalfinance.finance_system.repository.LimitRepository;
+import com.personalfinance.finance_system.repository.ExpenseRepository;
 import com.personalfinance.finance_system.repository.UserRepository;
 import com.personalfinance.finance_system.service.AdminService;
 import org.springframework.stereotype.Service;
@@ -24,16 +21,13 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ExpenseRepository expenseRepository;
     private final LimitRepository expenseLimitRepository;
-    private final IncomeRepository incomeRepository;
 
     public AdminServiceImpl(UserRepository userRepository,
                             ExpenseRepository expenseRepository,
-                            LimitRepository expenseLimitRepository,
-                            IncomeRepository incomeRepository) {
+                            LimitRepository expenseLimitRepository) {
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
         this.expenseLimitRepository = expenseLimitRepository;
-        this.incomeRepository = incomeRepository;
     }
 
     @Override
@@ -45,12 +39,19 @@ public class AdminServiceImpl implements AdminService {
                 .stream()
                 .mapToDouble(Expense::getAmount)
                 .sum();
+
         overview.put("totalExpense", totalExpense);
 
         // Category-wise expense summary
-        Map<String, Double> categorySummary = getExpensesGroupedByCategory();
+        Map<String, Double> categorySummary = expenseRepository.findAll()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        Collectors.summingDouble(Expense::getAmount)
+                ));
         overview.put("categorySummary", categorySummary);
 
+        // Optional: You can add other stats or graphs data as needed
         return overview;
     }
 
@@ -68,14 +69,18 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getUsersExceededLimit() {
+        // Get all users who have set a limit
         List<Limit> limits = expenseLimitRepository.findAll();
+
         List<User> usersExceededLimit = new ArrayList<>();
 
         for (Limit limit : limits) {
             User user = limit.getUser();
-
+            // Sum of expenses for this user for current month
             Double userExpenseSum = expenseRepository
-                    .findByUserAndDateBetween(user, getStartOfCurrentMonth(), getEndOfCurrentMonth())
+                    .findByUserAndDateBetween(user,
+                            getStartOfCurrentMonth(),
+                            getEndOfCurrentMonth())
                     .stream()
                     .mapToDouble(Expense::getAmount)
                     .sum();
@@ -84,41 +89,7 @@ public class AdminServiceImpl implements AdminService {
                 usersExceededLimit.add(user);
             }
         }
-
         return usersExceededLimit;
-    }
-
-    @Override
-    public Map<String, Double> getExpensesGroupedByCategory() {
-        return expenseRepository.findAll()
-                .stream()
-                .collect(Collectors.groupingBy(
-                        Expense::getCategory,
-                        Collectors.summingDouble(Expense::getAmount)
-                ));
-    }
-
-    @Override
-    public FinancialReportResponse getSystemFinancialReport() {
-        // Total income
-        Double totalIncome = incomeRepository.findAll()
-                .stream()
-                .mapToDouble(Income::getAmount)
-                .sum();
-
-        // Total expense
-        Double totalExpense = expenseRepository.findAll()
-                .stream()
-                .mapToDouble(Expense::getAmount)
-                .sum();
-
-        // Remaining balance
-        Double balance = totalIncome - totalExpense;
-
-        // Expense grouped by category
-        Map<String, Double> expenseByCategory = getExpensesGroupedByCategory();
-
-        return new FinancialReportResponse(totalIncome, totalExpense, balance, expenseByCategory);
     }
 
     private LocalDate getStartOfCurrentMonth() {
