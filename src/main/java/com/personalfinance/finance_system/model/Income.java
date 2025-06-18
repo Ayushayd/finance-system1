@@ -2,39 +2,37 @@ package com.personalfinance.finance_system.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Setter
+@NoArgsConstructor
 @Getter
+@Setter
 @Entity
-public class Expense {
-    // Getters and Setters
+@Table(name = "income")
+public class Income {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String category;
     private Double amount;
+
+    private String source;
+
     private LocalDate date;
 
-    private String description;
-
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
-//    // Constructors
-    public Expense() {}
-
-    public Expense(String category, Double amount, LocalDate date, String description, User user)
-    {
-        this.category = category;
+    public Income(Double amount, String source, LocalDate date, User user) {
         this.amount = amount;
+        this.source = source;
         this.date = date;
-        this.description = description;
         this.user = user;
     }
 
 }
-

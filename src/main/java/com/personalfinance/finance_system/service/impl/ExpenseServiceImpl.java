@@ -95,4 +95,17 @@ public class ExpenseServiceImpl implements ExpenseService {
         response.setDescription(expense.getDescription());
         return response;
     }
+
+    @Override
+    public List<ExpenseResponse> getExpensesByCategory(String username, String category) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        List<Expense> expenses = expenseRepository.findByUserIdAndCategory(user.getId(), category);
+
+        return expenses.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
 }

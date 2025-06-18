@@ -61,8 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ex) {
-            // Optional: Log invalid token error or let it pass as unauthenticated
-            // logger.warn("JWT token validation failed: " + ex.getMessage());
+             logger.warn("JWT token validation failed: " + ex.getMessage());
         }
 
         filterChain.doFilter(request, response);

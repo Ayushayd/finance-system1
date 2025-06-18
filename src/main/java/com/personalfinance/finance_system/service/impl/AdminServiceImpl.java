@@ -1,11 +1,14 @@
 package com.personalfinance.finance_system.service.impl;
 
+import com.personalfinance.finance_system.dto.*;
 import com.personalfinance.finance_system.exception.ResourceNotFoundException;
 import com.personalfinance.finance_system.model.Expense;
+import com.personalfinance.finance_system.model.Income;
 import com.personalfinance.finance_system.model.Limit;
 import com.personalfinance.finance_system.model.User;
-import com.personalfinance.finance_system.repository.LimitRepository;
 import com.personalfinance.finance_system.repository.ExpenseRepository;
+import com.personalfinance.finance_system.repository.IncomeRepository;
+import com.personalfinance.finance_system.repository.LimitRepository;
 import com.personalfinance.finance_system.repository.UserRepository;
 import com.personalfinance.finance_system.service.AdminService;
 import org.springframework.stereotype.Service;
@@ -21,14 +24,18 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ExpenseRepository expenseRepository;
     private final LimitRepository expenseLimitRepository;
+    private final IncomeRepository incomeRepository;
 
     public AdminServiceImpl(UserRepository userRepository,
                             ExpenseRepository expenseRepository,
-                            LimitRepository expenseLimitRepository) {
+                            LimitRepository expenseLimitRepository,
+                            IncomeRepository incomeRepository) {
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
         this.expenseLimitRepository = expenseLimitRepository;
+        this.incomeRepository = incomeRepository;
     }
+
 
     @Override
     public Map<String, Object> getOverview() {
@@ -39,19 +46,12 @@ public class AdminServiceImpl implements AdminService {
                 .stream()
                 .mapToDouble(Expense::getAmount)
                 .sum();
-
         overview.put("totalExpense", totalExpense);
 
         // Category-wise expense summary
-        Map<String, Double> categorySummary = expenseRepository.findAll()
-                .stream()
-                .collect(Collectors.groupingBy(
-                        Expense::getCategory,
-                        Collectors.summingDouble(Expense::getAmount)
-                ));
+        Map<String, Double> categorySummary = getExpensesGroupedByCategory();
         overview.put("categorySummary", categorySummary);
 
-        // Optional: You can add other stats or graphs data as needed
         return overview;
     }
 
@@ -69,18 +69,14 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getUsersExceededLimit() {
-        // Get all users who have set a limit
         List<Limit> limits = expenseLimitRepository.findAll();
-
         List<User> usersExceededLimit = new ArrayList<>();
 
         for (Limit limit : limits) {
             User user = limit.getUser();
-            // Sum of expenses for this user for current month
+
             Double userExpenseSum = expenseRepository
-                    .findByUserAndDateBetween(user,
-                            getStartOfCurrentMonth(),
-                            getEndOfCurrentMonth())
+                    .findByUserAndDateBetween(user, getStartOfCurrentMonth(), getEndOfCurrentMonth())
                     .stream()
                     .mapToDouble(Expense::getAmount)
                     .sum();
@@ -89,8 +85,107 @@ public class AdminServiceImpl implements AdminService {
                 usersExceededLimit.add(user);
             }
         }
+
         return usersExceededLimit;
     }
+
+    @Override
+    public Map<String, Double> getExpensesGroupedByCategory() {
+        return expenseRepository.findAll()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        Collectors.summingDouble(Expense::getAmount)
+                ));
+    }
+
+    @Override
+    public FinancialReportResponse getSystemFinancialReport() {
+        // Total income
+        Double totalIncome = incomeRepository.findAll()
+                .stream()
+                .mapToDouble(Income::getAmount)
+                .sum();
+
+        // Total expense
+        Double totalExpense = expenseRepository.findAll()
+                .stream()
+                .mapToDouble(Expense::getAmount)
+                .sum();
+
+        // Remaining balance
+        Double balance = totalIncome - totalExpense;
+
+        // Expense grouped by category
+        Map<String, Double> expenseByCategory = getExpensesGroupedByCategory();
+
+        return new FinancialReportResponse(totalIncome, totalExpense, balance, expenseByCategory);
+    }
+
+    @Override
+    public List<ExpenseResponse> getAllExpenses() {
+        return expenseRepository.findAll()
+                .stream()
+                .filter(expense -> "USER".equalsIgnoreCase(String.valueOf(expense.getUser().getRole())))
+                .map(expense -> {
+                    User user = expense.getUser();
+                    return new ExpenseResponse(
+                            expense.getId(),
+                            expense.getDescription(),
+                            expense.getAmount(),
+                            expense.getDate(),
+                            expense.getCategory(),
+                            user.getId(),
+                            user.getUsername()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+    @Override
+    public List<IncomeWithUserLimitDTO> getAllIncomes() {
+        List<Income> incomes = incomeRepository.findAll();
+
+        return incomes.stream().map(income -> {
+            User user = income.getUser();
+            Double monthlyLimit = expenseLimitRepository.findByUser(user)
+                    .map(Limit::getLimitAmount)
+                    .orElse(null);
+
+            return new IncomeWithUserLimitDTO(
+                    income.getId(),
+                    income.getAmount(),
+                    income.getSource(),
+                    income.getDate(),
+                    user.getId(),
+                    user.getUsername(),
+                    monthlyLimit
+            );
+        }).collect(Collectors.toList());
+    }
+
+
+
+
+    @Override
+    public ExpenseLimitResponse setExpenseLimit(Long userId, Double monthlyLimit) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        Limit limit = expenseLimitRepository.findByUser(user)
+                .orElse(new Limit());
+
+        limit.setUser(user);
+        limit.setLimitAmount(monthlyLimit);
+        expenseLimitRepository.save(limit);
+
+        return new ExpenseLimitResponse(monthlyLimit);
+    }
+
+
+
 
     private LocalDate getStartOfCurrentMonth() {
         Calendar cal = Calendar.getInstance();

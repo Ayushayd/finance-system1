@@ -1,25 +1,19 @@
+// com.personalfinance.finance_system.dto.IncomeWithUserLimitDTO.java
 package com.personalfinance.finance_system.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 import java.time.LocalDate;
 
-@Setter
-@Getter
+@Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class ExpenseResponse {
-
-    // Getters and Setters
+public class IncomeWithUserLimitDTO {
     private Long id;
-    private String description;
     private Double amount;
+    private String source;
     private LocalDate date;
-    private String category;
     private Long userId;
     private String username;
-
+    private Double monthlyLimit;
 }
