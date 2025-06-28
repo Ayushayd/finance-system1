@@ -4,6 +4,7 @@ import com.personalfinance.finance_system.dto.*;
 import com.personalfinance.finance_system.model.Expense;
 import com.personalfinance.finance_system.model.Income;
 import com.personalfinance.finance_system.model.Limit;
+import com.personalfinance.finance_system.model.User;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,8 @@ public interface UserService {
     IncomeResponseDTO updateIncome(String username, Long incomeId, IncomeRequest request);
     void deleteIncome(String username, Long incomeId);
 
-
     FinancialReportResponse getFinancialReport(String username);
+
+    User getUser(String username);
+
 }

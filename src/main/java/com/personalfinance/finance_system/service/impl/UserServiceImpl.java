@@ -6,6 +6,7 @@ import com.personalfinance.finance_system.model.*;
 import com.personalfinance.finance_system.repository.*;
 
 import com.personalfinance.finance_system.service.UserService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -208,8 +209,10 @@ public class UserServiceImpl implements UserService {
         return new FinancialReportResponse(totalIncome, totalExpense, balance, expenseByCategory);
     }
 
-    private User getUser(String username) {
+    @Override
+    public User getUser(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
+
 }
