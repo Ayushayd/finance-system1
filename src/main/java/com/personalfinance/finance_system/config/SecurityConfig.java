@@ -78,7 +78,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "https://personal-finance-frontend-q1b7-5wqi1o0zd.vercel.app")); // React app origin
+        config.setAllowedOrigins(List.of("http://localhost:5173", "https://personal-finance-frontend-q1b7.vercel.app")); // React app origin
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
