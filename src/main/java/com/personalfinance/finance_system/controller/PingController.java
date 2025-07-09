@@ -1,5 +1,6 @@
 package com.personalfinance.finance_system.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -7,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PingController {
 
     @GetMapping("/ping")
-    public String ping() {
-        return "Health check successfull!";
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("Server is alive!");
     }
 }
+
